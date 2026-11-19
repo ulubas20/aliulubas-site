@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Yönetim Merkezi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    :root {
+      --bg: #05070d;
+      --sidebar: #0b0f1a;
+      --panel: #101625;
+      --panel-2: #161f33;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --cyan: #00f2fe;
+      --pink: #fe2c55;
+      --green: #10b981;
+      --red: #ef4444;
+      --gold: #ffd700;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Kilit Ekranı */
+    .auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at 50% 20%, rgba(0, 242, 254, 0.1), transparent 50%);
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 390px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 34px 26px;
+      text-align: center;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7);
+    }
+
+    /* Form Elemanları */
+    .field-group { margin-bottom: 14px; }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .input, select, textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #080c15;
+      color: var(--text);
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input:focus, select:focus, textarea:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0, 242, 254, 0.12);
+    }
+
+    /* Özel Şık Dosya Seçim Butonu */
+    .custom-upload-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1.5px dashed rgba(0, 242, 254, 0.4);
+      background: rgba(0, 242, 254, 0.04);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .custom-upload-box:hover {
+      background: rgba(0, 242, 254, 0.09);
+      border-color: var(--cyan);
+    }
+    .custom-upload-box input[type="file"] { display: none; }
+    .upload-btn-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #00f2fe, #38bdf8);
+      color: #041019;
+      font-weight: 800;
+      font-size: 0.82rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .upload-file-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Butonlar */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.86rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.15s, opacity 0.2s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: linear-gradient(90deg, #00f2fe, #38bdf8); color: #041019; }
+    .btn-success { background: var(--green); color: #031a11; }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.35); }
+    .btn-warning { background: rgba(255, 215, 0, 0.14); color: #fde047; border: 1px solid rgba(255, 215, 0, 0.35); }
+    .btn-ghost { background: rgba(255, 255, 255, 0.06); color: var(--text); border: 1px solid var(--border); }
+    .btn-sm { padding: 7px 11px; font-size: 0.78rem; border-radius: 9px; }
+
+    /* Panel İskeleti */
+    .admin-layout { display: none; min-height: 100vh; }
+    .topbar {
+      background: var(--sidebar);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 22px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .main-area {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 22px 16px 60px;
+    }
+
+    .nav-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+      background: var(--sidebar);
+      padding: 8px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+    .nav-pill {
+      padding: 10px 16px;
+      border-radius: 11px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.86rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .nav-pill.active {
+      background: rgba(0, 242, 254, 0.14);
+      color: var(--cyan);
+    }
+
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+    .card-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-title { font-size: 1.06rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 780px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+    /* Podyum Yönetim Kartları */
+    .podium-admin-card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .podium-admin-card.r1 { border-color: rgba(255, 215, 0, 0.55); }
+    .podium-admin-card.r2 { border-color: rgba(56, 189, 248, 0.5); }
+    .podium-admin-card.r3 { border-color: rgba(251, 146, 60, 0.5); }
+
+    /* Sosyal Medya Satırları */
+    .item-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 10px;
+    }
+
+    /* Ziyaretçi Klasörleri */
+    .folder-item {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .folder-header {
+      padding: 14px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .folder-body {
+      display: none;
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      background: #0a0e18;
+      font-size: 0.85rem;
+    }
+    .folder-item.open .folder-body { display: block; }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .info-box {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px 12px;
+      border-radius: 10px;
+    }
+    .info-box span { display: block; font-size: 0.72rem; color: var(--muted); }
+
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      background: var(--green);
+      color: #031a11;
+      font-weight: 800;
+      padding: 12px 20px;
+      border-radius: 12px;
+      display: none;
+      z-index: 999;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Giriş Ekranı -->
+  <div id="authScreen" class="auth-screen">
+    <form id="loginForm" class="auth-card">
+      <div style="font-size: 2.2rem; color: var(--cyan); margin-bottom: 10px;"><i class="fa-solid fa-shield-halved"></i></div>
+      <h1 style="font-size: 1.25rem; margin-bottom: 18px;">Yönetici Oturumu</h1>
+      <div class="field-group">
+        <input type="password" id="adminPassInput" class="input" placeholder="Erişim anahtarını girin" autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">Giriş Yap</button>
+      <p id="authError" style="color: #f87171; font-size: 0.82rem; margin-top: 10px; display: none;">Hatalı erişim anahtarı.</p>
+    </form>
+  </div>
+
+  <!-- Yönetim Paneli -->
+  <div id="adminLayout" class="admin-layout">
+    <header class="topbar">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.3rem;">⚡</span>
+        <div>
+          <strong style="font-size: 1.02rem;">Ali Ulubaş — Kontrol Merkezi</strong>
+          <div style="font-size: 0.76rem; color: var(--muted);">Podyum Sıralaması, Medya Yükleme & Ziyaretçi Klasörleri</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <a href="index.html" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Siteyi Aç</a>
+        <button type="button" id="logoutBtn" class="btn btn-danger btn-sm"><i class="fa-solid fa-power-off"></i> Çıkış</button>
+      </div>
+    </header>
+
+    <main class="main-area">
+      <nav class="nav-pills">
+        <button class="nav-pill active" data-tab="sec-podium"><i class="fa-solid fa-trophy"></i> Top 3 Podyum & Sıralama</button>
+        <button class="nav-pill" data-tab="sec-socials"><i class="fa-solid fa-link"></i> Sosyal Medya Butonları</button>
+        <button class="nav-pill" data-tab="sec-profile"><i class="fa-solid fa-user-pen"></i> Profil Ayarları</button>
+        <button class="nav-pill" data-tab="sec-visitors"><i class="fa-solid fa-folder-open"></i> Ziyaretçi Klasörleri</button>
+        <button class="nav-pill" data-tab="sec-backup"><i class="fa-solid fa-database"></i> Yedekleme</button>
+      </nav>
+
+      <!-- 1. TOP 3 PODYUM & SIRALAMA YÖNETİMİ -->
+      <section id="sec-podium" class="tab-section active">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-ranking-star" style="color: var(--gold);"></i> Canlı Podyum Sıralaması (1 - 2 - 3)</h2>
+            <button type="button" id="autoSortByCoinsBtn" class="btn btn-warning btn-sm">
+              <i class="fa-solid fa-arrow-down-9-1"></i> Jeton Sayısına Göre Otomatik Sırala
+            </button>
+          </div>
+          <div id="podiumOverviewGrid" class="grid-3"></div>
+        </div>
+
+        <div class="card" id="supporterEditorCard">
+          <div class="card-header">
+            <h2 class="card-title" id="editorHeading">✏️ 1. Sıra Destekçisini Düzenle</h2>
+            <button type="button" id="resetSupporterSlotBtn" class="btn btn-danger btn-sm">
+              <i class="fa-solid fa-eraser"></i> Bu Sırayı Sıfırla / Temizle
+            </button>
+          </div>
+
+          <div class="grid-2">
+            <div class="field-group">
+              <label>Destekçi İsim</label>
+              <input type="text" id="supName" class="input" placeholder="Ad veya takma ad" />
+            </div>
+            <div class="field-group">
+              <label>TikTok Kullanıcı Adı (@)</label>
+              <input type="text" id="supUsername" class="input" placeholder="@kullaniciadi" />
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="field-group">
+              <label>TikTok Hediye Leveli</label>
+              <input type="number" id="supLevel" class="input" min="1" max="100" placeholder="Örn: 42" />
+            </div>
+            <div class="field-group">
+              <label>Bu Ay Attığı Toplam Jeton</label>
+              <input type="number" id="supCoins" class="input" min="0" placeholder="Örn: 150000" />
+            </div>
+            <div class="field-group">
+              <label>Podyum Çıkartma / Rozet Yazısı</label>
+              <input type="text" id="supBadge" class="input" placeholder="Örn: 👑 GLOBAL 1ST" />
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field-group">
+              <label>TikTok Profil Bağlantısı</label>
+              <input type="url" id="supUrl" class="input" placeholder="https://www.tiktok.com/@..." />
+            </div>
+            <div class="field-group">
+              <label>Destekçi Profil Fotoğrafı (Cihazdan Yükle)</label>
+              <label class="custom-upload-box" for="supAvatarFile">
+                <span class="upload-file-label" id="supAvatarFileName">Yeni fotoğraf seçilmedi</span>
+                <span class="upload-btn-pill"><i class="fa-solid fa-image"></i> Fotoğraf Seç</span>
+                <input type="file" id="supAvatarFile" accept="image/*" />
+              </label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label>Destekçi Özel Sayfa Biyografisi</label>
+            <textarea id="supBio" rows="2" placeholder="Destekçinin özel sayfasında görünecek açıklama..."></textarea>
+          </div>
+
+          <button type="button" id="saveSupporterBtn" class="btn btn-success">
+            <i class="fa-solid fa-check"></i> Destekçi Bilgilerini Kaydet
+          </button>
+        </div>
+
+        <!-- Hediye Videosu Yükleme & Silme -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title" id="videoManagerHeading">🎁 1. Sıra Hediye Videoları</h2>
+          </div>
+
+          <div class="grid-2" style="align-items: end;">
+            <div class="field-group">
+              <label>Hediye Videosu Başlığı</label>
+              <input type="text" id="newVideoTitle" class="input" placeholder="Örn: TikTok Evreni Hediyesi" />
+            </div>
+            <div class="field-group">
+              <label>Cihazdan Video Dosyası Seç</label>
+              <label class="custom-upload-box" for="newVideoFile">
+                <span class="upload-file-label" id="newVideoFileName">Video seçilmedi (.mp4 / .mov)</span>
+                <span class="upload-btn-pill"><i class="fa-solid fa-video"></i> Video Seç</span>
+                <input type="file" id="newVideoFile" accept="video/*" />
+              </label>
+            </div>
+          </div>
+
+          <button type="button" id="uploadSupporterVideoBtn" class="btn btn-primary" style="margin-bottom: 18px;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Hediye Videosunu Ekle
+          </button>
+
+          <div id="adminSupporterVideos"></div>
+        </div>
+      </section>
+
+      <!-- 2. SOSYAL MEDYA BUTONLARI -->
+      <section id="sec-socials" class="tab-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title" id="socialFormTitle"><i class="fa-solid fa-plus-circle" style="color: var(--cyan);"></i> Yeni Sosyal Medya Butonu Ekle</h2>
+            <button type="button" id="cancelSocialEditBtn" class="btn btn-ghost btn-sm" style="display: none;">Düzenlemeyi İptal Et</button>
+          </div>
+
+          <div class="grid-2">
+            <div class="field-group">
+              <label>Buton Başlığı</label>
+              <input type="text" id="socTitle" class="input" placeholder="Örn: TikTok Canlı Yayın" />
+            </div>
+            <div class="field-group">
+              <label>Alt Açıklama</label>
+              <input type="text" id="socSub" class="input" placeholder="Örn: @aliulubas20" />
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field-group">
+              <label>Bağlantı Adresi (URL)</label>
+              <input type="url" id="socUrl" class="input" placeholder="https://..." />
+            </div>
+            <div class="field-group">
+              <label>Platform İkonu</label>
+              <select id="socIcon">
+                <option value="fa-brands fa-tiktok">TikTok</option>
+                <option value="fa-brands fa-youtube">YouTube</option>
+                <option value="fa-brands fa-instagram">Instagram</option>
+                <option value="fa-brands fa-discord">Discord</option>
+                <option value="fa-brands fa-whatsapp">WhatsApp</option>
+                <option value="fa-solid fa-bag-shopping">Shopier / Mağaza</option>
+                <option value="fa-solid fa-globe">Web Sitesi</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="button" id="saveSocialBtn" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Butonu Kaydet
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Mevcut Sosyal Medya Butonları</h2>
+          </div>
+          <div id="adminSocialList"></div>
+        </div>
+      </section>
+
+      <!-- 3. PROFİL AYARLARI -->
+      <section id="sec-profile" class="tab-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-id-card" style="color: var(--cyan);"></i> Ana Profil Bilgileri</h2>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 18px;">
+            <img id="adminProfilePreview" src="" alt="Önizleme" style="width: 74px; height: 74px; border-radius: 50%; object-fit: cover; border: 2px solid var(--cyan);" />
+            <div style="flex: 1;">
+              <label>Ana Profil Fotoğrafını Değiştir</label>
+              <label class="custom-upload-box" for="editAvatarFile">
+                <span class="upload-file-label" id="profileAvatarFileName">Cihazdan fotoğraf seçin</span>
+                <span class="upload-btn-pill"><i class="fa-solid fa-camera"></i> Fotoğraf Seç</span>
+                <input type="file" id="editAvatarFile" accept="image/*" />
+              </label>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field-group">
+              <label>Görünen İsim</label>
+              <input type="text" id="editName" class="input" />
+            </div>
+            <div class="field-group">
+              <label>Kullanıcı Adı (@)</label>
+              <input type="text" id="editUsername" class="input" />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label>Biyografi</label>
+            <textarea id="editBio" rows="3"></textarea>
+          </div>
+
+          <div class="grid-2">
+            <div class="field-group">
+              <label>Canlı Yayın Rozeti</label>
+              <select id="editIsLive">
+                <option value="true">Aktif (CANLI YAYINDA rozeti görünsün)</option>
+                <option value="false">Pasif (Gizli)</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Alt Bilgi (Footer) Metni</label>
+              <input type="text" id="editFooter" class="input" />
+            </div>
+          </div>
+
+          <button type="button" id="saveProfileBtn" class="btn btn-success">
+            <i class="fa-solid fa-check"></i> Profil Değişikliklerini Kaydet
+          </button>
+        </div>
+      </section>
+
+      <!-- 4. ZİYARETÇİ KLASÖRLERİ -->
+      <section id="sec-visitors" class="tab-section">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title"><i class="fa-solid fa-folder-tree" style="color: var(--cyan);"></i> Kişiye Özel Ziyaretçi Klasörleri</h2>
+              <p style="font-size: 0.8rem; color: var(--muted); margin-top: 3px;">IP adresi, konum, operatör (ISP), cihaz modeli ve saat/tarih kayıtları kişi bazlı klasörlenir.</p>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" id="exportVisitorsCsvBtn" class="btn btn-ghost btn-sm"><i class="fa-solid fa-file-csv"></i> CSV İndir</button>
+              <button type="button" id="exportVisitorsJsonBtn" class="btn btn-success btn-sm"><i class="fa-solid fa-file-code"></i> JSON Rapor</button>
+              <button type="button" id="clearVisitorsBtn" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i> Tümünü Sil</button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <input type="text" id="visitorSearchInput" class="input" placeholder="IP, şehir, operatör (Turkcell / Türk Telekom) veya telefon modeli ara..." />
+          </div>
+          <div id="visitorFoldersContainer"></div>
+        </div>
+      </section>
+
+      <!-- 5. YEDEKLEME -->
+      <section id="sec-backup" class="tab-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-shield" style="color: var(--green);"></i> Site Verilerini Yedekle & Geri Yükle</h2>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" id="exportSiteJsonBtn" class="btn btn-success"><i class="fa-solid fa-download"></i> Ayarları Yedekle (.json)</button>
+            <label class="btn btn-ghost" style="cursor: pointer;">
+              <i class="fa-solid fa-upload"></i> Yedekten Geri Yükle (.json)
+              <input type="file" id="importSiteJsonInput" accept=".json" style="display: none;" />
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast">Kaydedildi!</div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ali Ulubaş | Resmi Bağlantılar & TikTok Global Top 3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <main class="container">
+    <!-- Profil Kartı -->
+    <section class="profile-card">
+      <div class="avatar-ring">
+        <img id="profileAvatar" src="" alt="Profil Fotoğrafı" />
+        <span id="liveBadge" class="live-badge" style="display: none;">CANLI YAYINDA</span>
+      </div>
+      <h1 class="profile-name">
+        <span id="profileName">Ali Ulubaş</span>
+        <i class="fa-solid fa-circle-check verified-icon" title="Onaylı Hesap"></i>
+      </h1>
+      <div id="profileHandle" class="profile-handle">@aliulubas20</div>
+      <p id="profileBio" class="profile-bio"></p>
+    </section>
+
+    <!-- Sosyal Medya Butonları -->
+    <section id="socialLinksContainer" class="links-stack" aria-label="Sosyal Medya Bağlantıları"></section>
+
+    <!-- Global İlk 3 Destekçi Podyumu (Yan Yana) -->
+    <section aria-label="Global İlk 3 Destekçi">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span>🏆</span>
+          <span>Aylık Global Top 3 Destekçi</span>
+        </h2>
+        <span class="section-badge">VIP PODYUM</span>
+      </div>
+
+      <div id="podiumContainer" class="podium-row"></div>
+    </section>
+
+    <footer class="site-footer">
+      <p id="footerText">© 2026 Ali Ulubaş (@aliulubas20) — Tüm hakları saklıdır.</p>
+    </footer>
+  </main>
+
+  <!-- Destekçi Özel Profil Sayfası Modalı -->
+  <div id="supporterModal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div id="supporterPageBox" class="supporter-page-box">
+      <div class="page-top-actions">
+        <button type="button" id="closeSupporterModal" class="pill-btn">
+          <i class="fa-solid fa-arrow-left"></i> Geri Dön
+        </button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a id="openInNewTabBtn" href="#" target="_blank" rel="noopener" class="pill-btn">
+            <i class="fa-solid fa-up-right-from-square"></i> Yeni Sekmede Aç
+          </a>
+          <a id="supporterTiktokBtn" href="#" target="_blank" rel="noopener" class="pill-btn tiktok-cta">
+            <i class="fa-brands fa-tiktok"></i> TikTok Profili
+          </a>
+        </div>
+      </div>
+
+      <div style="text-align: center; padding: 8px 0 14px;">
+        <div id="modalRankBadge" class="rank-sticker sticker-1" style="display: inline-block; margin-bottom: 10px;">
+          👑 GLOBAL 1ST
+        </div>
+        <div style="width: 96px; height: 96px; margin: 0 auto 10px;">
+          <img id="modalSupporterAvatar" src="" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid #ffd700;" />
+        </div>
+        <h3 id="modalSupporterName" style="font-size: 1.4rem; font-weight: 800;"></h3>
+        <div id="modalSupporterHandle" style="color: #00f2fe; font-weight: 600; font-size: 0.92rem;"></div>
+
+        <div class="supporter-stats-bar">
+          <span id="modalSupporterLevel" class="stat-chip" style="color: #a78bfa;">⚡ TikTok Lv. 1</span>
+          <span id="modalSupporterCoins" class="stat-chip" style="color: #fde047;">🪙 Bu Ay: 0 Jeton</span>
+        </div>
+
+        <p id="modalSupporterBio" style="color: #cbd5e1; font-size: 0.9rem; max-width: 480px; margin: 12px auto 0; white-space: pre-line;"></p>
+      </div>
+
+      <div class="section-header" style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;">
+        <h4 style="font-size: 0.98rem; font-weight: 700;">🎁 Gönderdiği Hediye Videoları</h4>
+        <span id="modalVideoCount" class="section-badge">0 Video</span>
+      </div>
+
+      <div id="supporterVideosGrid" class="video-grid"></div>
+    </div>
+  </div>
+
+  <!-- Tam Ekran Video Oynatıcı & Üyeliksiz Beğeni -->
+  <div id="videoPlayerModal" class="player-modal" role="dialog" aria-modal="true">
+    <div class="player-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <span id="playerVideoTitle" style="font-weight: 700; font-size: 0.92rem;">Hediye Videosu</span>
+        <button type="button" id="closePlayerModal" class="pill-btn" style="padding: 5px 11px;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <video id="activeVideoPlayer" controls playsinline></video>
+      <div class="player-footer">
+        <div style="font-size: 0.8rem; color: #94a3b8;">Kayıt olmadan beğenebilirsiniz</div>
+        <button type="button" id="videoLikeBtn" class="like-btn">
+          <i class="fa-solid fa-heart"></i>
+          <span id="videoLikeCount">0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/tracker.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
