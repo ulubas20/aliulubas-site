@@ -1,9 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // GİZLİ YÖNETİCİ ŞİFRESİ (GitHub üzerinden bu satırı değiştirerek şifrenizi güncelleyebilirsiniz)
+  // GİZLİ YÖNETİCİ ŞİFRESİ
   const ADMIN_ACCESS_KEY = 'Ali2026!';
   const SESSION_KEY = 'aliulubas_admin_auth_ok';
 
-  // Eğer storage.js yüklenemezse veya yol hatası olursa panelin çökmesini engelleyen dahili yedek motor
+  // GİTHUB DEPO BİLGİLERİ (Token buraya yazılmaz, panel üzerinden tarayıcıya kaydedilir)
+  const GITHUB_CONFIG = {
+    owner: 'ulubas20',
+    repo: 'ulubas20.github.io', // Deponuzun adı farklıysa burayı güncelleyin
+    branch: 'main',
+    dataPath: 'data/site-data.json'
+  };
+  const GH_TOKEN_STORAGE_KEY = 'aliulubas_gh_pat_secure';
+
   const store = window.LinkHubStore || createFallbackStore();
 
   const authScreen = document.getElementById('authScreen');
@@ -80,9 +88,142 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  // --- GİTHUB API SENKRONİZASYON MOTORU ---
+  function getGitHubToken() {
+    return localStorage.getItem(GH_TOKEN_STORAGE_KEY) || '';
+  }
+
+  function injectGitHubSyncBar() {
+    if (!adminLayout || document.getElementById('ghSyncBar')) return;
+    const bar = document.createElement('div');
+    bar.id = 'ghSyncBar';
+    bar.style.cssText =
+      'background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;';
+
+    const savedToken = getGitHubToken();
+    bar.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <span style="font-weight: 800; color: #00f2fe;"><i class="fa-brands fa-github"></i> GitHub Canlı Yayın Bağlantısı</span>
+        <span id="ghSyncStatus" style="font-size: 0.8rem; padding: 3px 10px; border-radius: 999px; background: ${
+          savedToken ? 'rgba(16, 185, 129, 0.15); color: #10b981;' : 'rgba(245, 158, 11, 0.15); color: #f59e0b;'
+        }">${savedToken ? '● Token Kayıtlı (Otomatik Yayın Aktif)' : '● Token Girilmedi (Sadece Yerel Kayıt)'}</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <input type="password" id="ghTokenInput" placeholder="Yeni GitHub Token (ghp_... / github_pat_...)" value="${savedToken}" style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 7px 12px; border-radius: 8px; font-size: 0.82rem; width: 240px;" />
+        <button type="button" id="saveGhTokenBtn" class="btn btn-primary btn-sm">Token Kaydet</button>
+        <button type="button" id="pushNowGhBtn" class="btn btn-ghost btn-sm"><i class="fa-solid fa-cloud-arrow-up"></i> Şimdi GitHub'a Gönder</button>
+      </div>
+    `;
+
+    adminLayout.insertBefore(bar, adminLayout.firstChild);
+
+    document.getElementById('saveGhTokenBtn')?.addEventListener('click', () => {
+      const val = (document.getElementById('ghTokenInput')?.value || '').trim();
+      const statusEl = document.getElementById('ghSyncStatus');
+      if (val) {
+        localStorage.setItem(GH_TOKEN_STORAGE_KEY, val);
+        if (statusEl) {
+          statusEl.textContent = '● Token Kayıtlı (Otomatik Yayın Aktif)';
+          statusEl.style.background = 'rgba(16, 185, 129, 0.15)';
+          statusEl.style.color = '#10b981';
+        }
+        showToast('GitHub Token güvenli şekilde tarayıcınıza kaydedildi!');
+      } else {
+        localStorage.removeItem(GH_TOKEN_STORAGE_KEY);
+        if (statusEl) {
+          statusEl.textContent = '● Token Girilmedi (Sadece Yerel Kayıt)';
+          statusEl.style.background = 'rgba(245, 158, 11, 0.15)';
+          statusEl.style.color = '#f59e0b';
+        }
+        showToast('GitHub Token temizlendi.');
+      }
+    });
+
+    document.getElementById('pushNowGhBtn')?.addEventListener('click', () => {
+      syncSiteDataToGitHub(store.getSiteData());
+    });
+  }
+
+  async function syncSiteDataToGitHub(siteData) {
+    const token = getGitHubToken();
+    if (!token) return; // Token girilmemişse sessizce sadece localStorage'da tut
+
+    const statusEl = document.getElementById('ghSyncStatus');
+    if (statusEl) statusEl.textContent = '⏳ GitHub\'a yükleniyor...';
+
+    const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.dataPath}`;
+
+    try {
+      // 1. Mevcut dosyanın SHA değerini al (varsa üzerine yazmak için gerekli)
+      let sha = null;
+      const getRes = await fetch(`${apiUrl}?ref=${GITHUB_CONFIG.branch}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json'
+        }
+      });
+
+      if (getRes.ok) {
+        const fileInfo = await getRes.json();
+        sha = fileInfo.sha;
+      } else if (getRes.status !== 404) {
+        throw new Error(`GitHub okuma hatası (${getRes.status})`);
+      }
+
+      // 2. UTF-8 uyumlu Base64 kodlama
+      const jsonStr = JSON.stringify(siteData, null, 2);
+      const base64Content = btoa(unescape(encodeURIComponent(jsonStr)));
+
+      const bodyPayload = {
+        message: `Admin panel güncellemesi (${new Date().toLocaleString('tr-TR')})`,
+        content: base64Content,
+        branch: GITHUB_CONFIG.branch
+      };
+      if (sha) bodyPayload.sha = sha;
+
+      // 3. Dosyayı GitHub deposuna gönder
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bodyPayload)
+      });
+
+      if (!putRes.ok) {
+        const errData = await putRes.json().catch(() => ({}));
+        throw new Error(errData.message || `GitHub kayıt hatası (${putRes.status})`);
+      }
+
+      if (statusEl) {
+        statusEl.textContent = '✅ GitHub\'a Yayınlandı (' + new Date().toLocaleTimeString('tr-TR') + ')';
+        statusEl.style.background = 'rgba(16, 185, 129, 0.15)';
+        statusEl.style.color = '#10b981';
+      }
+      showToast('Değişiklikler GitHub deposuna başarıyla gönderildi!');
+    } catch (err) {
+      console.error('GitHub Sync Hatası:', err);
+      if (statusEl) {
+        statusEl.textContent = '❌ GitHub Hatası: ' + err.message;
+        statusEl.style.background = 'rgba(239, 68, 68, 0.15)';
+        statusEl.style.color = '#ef4444';
+      }
+      alert('GitHub\'a gönderilemedi: ' + err.message);
+    }
+  }
+
+  function saveAndPublish(data) {
+    store.saveSiteData(data);
+    syncSiteDataToGitHub(data);
+  }
+
   function unlockAdmin() {
     if (authScreen) authScreen.style.display = 'none';
     if (adminLayout) adminLayout.style.display = 'block';
+
+    injectGitHubSyncBar();
 
     try {
       initDashboard();
@@ -244,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDefaultBadge(sB);
 
     data.supporters.sort((a, b) => a.rank - b.rank);
-    store.saveSiteData(data);
+    saveAndPublish(data);
     renderPodiumOverview();
     loadSupporterEditor(activeEditRank);
     showToast(`${rankA}. ve ${rankB}. sıradaki destekçiler yer değiştirdi!`);
@@ -263,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
       s.rank = i + 1;
       updateDefaultBadge(s);
     });
-    store.saveSiteData(data);
+    saveAndPublish(data);
     renderPodiumOverview();
     loadSupporterEditor(activeEditRank);
     showToast('Jeton sayısına göre 1-2-3 sıralaması güncellendi!');
@@ -312,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const d = store.getSiteData();
           const targetSup = d.supporters.find((s) => s.rank === rank);
           targetSup.videos.splice(Number(btn.dataset.delvid), 1);
-          store.saveSiteData(d);
+          saveAndPublish(d);
           loadSupporterEditor(rank);
           renderPodiumOverview();
           showToast('Hediye videosu silindi.');
@@ -345,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    store.saveSiteData(data);
+    saveAndPublish(data);
     renderPodiumOverview();
     loadSupporterEditor(activeEditRank);
     showToast(`${activeEditRank}. Sıra destekçisi kaydedildi!`);
@@ -357,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const idx = data.supporters.findIndex((s) => s.rank === activeEditRank);
     if (idx !== -1) {
       data.supporters[idx] = store.createBlankSupporter(activeEditRank);
-      store.saveSiteData(data);
+      saveAndPublish(data);
       renderPodiumOverview();
       loadSupporterEditor(activeEditRank);
       showToast(`${activeEditRank}. sıra sıfırlandı.`);
@@ -382,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
       createdAt: new Date().toLocaleString('tr-TR')
     });
 
-    store.saveSiteData(data);
+    saveAndPublish(data);
     document.getElementById('newVideoTitle').value = '';
     fileInput.value = '';
     const lbl = document.getElementById('newVideoFileName');
@@ -452,7 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', () => {
         const d = store.getSiteData();
         d.socials.splice(Number(btn.dataset.del), 1);
-        store.saveSiteData(d);
+        saveAndPublish(d);
         resetSocialForm();
         renderSocialAdmin();
         showToast('Sosyal medya butonu silindi.');
@@ -466,7 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const d = store.getSiteData();
         if (target < 0 || target >= d.socials.length) return;
         [d.socials[idx], d.socials[target]] = [d.socials[target], d.socials[idx]];
-        store.saveSiteData(d);
+        saveAndPublish(d);
         renderSocialAdmin();
       });
     });
@@ -507,7 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Yeni buton eklendi!');
     }
 
-    store.saveSiteData(data);
+    saveAndPublish(data);
     resetSocialForm();
     renderSocialAdmin();
   });
@@ -547,7 +688,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    store.saveSiteData(data);
+    saveAndPublish(data);
     loadProfileForm();
     showToast('Profil ayarları kaydedildi!');
   });
@@ -674,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        store.saveSiteData(JSON.parse(reader.result));
+        saveAndPublish(JSON.parse(reader.result));
         initDashboard();
         showToast('Yedek başarıyla geri yüklendi!');
       } catch {
