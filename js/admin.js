@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="font-size: 0.75rem; font-weight: 800; color: #00f2fe;">${sup.rank}. SIRA (${escapeHtml(sup.badgeText)})</div>
             <div style="font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(sup.name)}</div>
             <div style="font-size: 0.78rem; color: #94a3b8;">${escapeHtml(sup.username)} • Lv.${sup.tiktokLevel || 1}</div>
-            <div style="font-size: 0.78rem; color: #fde047; font-weight: 700;">🪙 ${Number(sup.monthlyCoins || 0).toLocaleString('tr-TR')} Jeton</div>
+            <div style="font-size: 0.78rem; color: #fde047; font-weight: 700;"><i class="fa-solid fa-coins"></i> ${Number(sup.monthlyCoins || 0).toLocaleString('tr-TR')} Jeton</div>
           </div>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.07);">
